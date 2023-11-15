@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download File</title>
+    <!-- Add any necessary styles or scripts here -->
+</head>
+<body>
+    <h2>Download File</h2>
+    <form method="POST" action="{{ url_for('download') }}">
+        <label for="filename">Enter Filename:</label>
+        <input type="text" id="filename" name="filename" required>
+        <input type="submit" value="Download">
+    </form>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modified Sequences Result</title>
+    <!-- Add any necessary styles or scripts here -->
+</head>
+<body>
+    <h2>Modified Sequences Result</h2>
+    {% if message %}
+        <p>{{ message }}</p>
+    {% else %}
+        <p><strong>Accession Code:</strong> {{ accession_code }}</p>
+        <p><strong>Original Sequence:</strong> {{ seq_record }}</p>
+        <p><strong>Modified Sequences:</strong></p>
+        <ul>
+            <li><strong>Complement:</strong> {{ seq_complement }}</li>
+            <li><strong>Reverse Complement:</strong> {{ seq_reverse_complement }}</li>
+            <li><strong>mRNA:</strong> {{ mRNA_seq }}</li>
+            <li><strong>Protein:</strong> {{ protein_seq }}</li>
+        </ul>
+    {% endif %}
+</body>
+</html>
