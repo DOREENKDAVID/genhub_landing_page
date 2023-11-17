@@ -1,25 +1,548 @@
-<!DOCTYPE html>
+<form action="{{ url_for('display_modified_seq') }}" method="post" class="mt-4">
+<div class="form-group">
+    <label for="accession_code">Accession Code:</label>
+    <input type="text" class="form-control" id="accession_code" name="accession_code" required>
+</div>
+</form>
+</div>{% if sequences %}
+    <div class="mt-5">
+        <h2>Modified Sequences</h2>
+
+        <!-- Display original sequence -->
+        <h3>Original Sequence</h3>
+        <pre>{{ sequences['seq_record'] }}</pre>
+
+        <!-- Display modified sequences in a table -->
+        <h3>Modified Sequences</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sequence Type</th>
+                    <th>Sequence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Complement</td>
+                    <td>{{ sequences['seq_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>Reverse Complement</td>
+                    <td>{{ sequences['seq_reverse_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>mRNA</td>
+                    <td>{{ sequences['mRNA_seq'] }}</td>
+                </tr>
+                <tr>
+                    <td>Protein</td>
+                    <td>{{ sequences['protein_seq'] }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p>No modified sequences found.</p>
+{% endif %}
+
+
+
+
+
+
+
+
+<!-- Display original and modified sequences -->
+{% if user_sequences or online_sequences or modified_sequences %}
+<div class="mt-5">
+    {% if user_sequences %}
+        <h2>User Uploaded Sequences</h2>
+        <!-- iterate on eveey sequence in file -->
+        {% for seq_record in user_sequences %}
+        <!-- Display user-uploaded sequences -->
+        <pre><textarea id="view" rows="10" cols="200">{{ seq_record.description }}  {{ seq_record.seq }}</textarea></pre>
+        {% endfor %}
+    {% endif %}
+
+
+    {% if online_sequences %}
+        <h2>Online Database Sequences</h2>
+        <!-- Display sequences from online database -->
+        <pre><textarea id="view" rows="10" cols="200">{{ online_sequences }}</textarea></pre>
+    {% endif %}
+
+    <button type="submit" class="btn btn-primary">Perform Central Dogma</button>
+
+{% if modified_sequences %}
+    <div class="mt-5">
+    <h2>Modified Sequences</h2>
+
+    <!-- Display original sequence -->
+    <h3>Original Sequence</h3>
+    <pre>{{ modified_sequences[0] }}</pre>
+
+    <!-- Display modified sequences in a table -->
+    <h3>Modified Sequences</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sequence Type</th>
+                <th>Sequence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for seq_type, seq_content in modified_sequences[1:] %}
+                <tr>
+                    <td>{{ seq_type }}</td>
+                    <td>{{ seq_content }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+
+
+
+
+
+
+
+{% if modified_sequences %}
+    <div class="mt-5">
+        <h2>Modified Sequences</h2>
+        <!-- Display modified sequences -->
+        <h3>Original Sequence</h3>
+        <pre>{{ modified_sequences[0] }}</pre>
+
+        <h3>Modified Sequences</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sequence Type</th>
+                    <th>Sequence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for seq_type, seq_content in modified_sequences %}
+                    <tr>
+                        <td>{{ seq_type }}</td>
+                        <td>{{ seq_content }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+<div class="mt-5">
+    <h1>Download</h1>
+    <p>Accession Code: {{ accession_code }}</p>
+    <p>Modified Sequences:</p>
+    <ul>
+        {% if modified_sequences %}
+            {% for seq_type, _ in modified_sequences[1:] %}
+                <li><a href="{{ url_for('download', filename=seq_type + '_' + accession_code + '.fasta') }}">Download {{ seq_type }} Sequence</a></li>
+            {% endfor %}
+        {% else %}
+            <li>No modified sequences available.</li>
+        {% endif %}
+    </ul>
+
+
+
+</form>
+</div>{% if sequences %}
+    <div class="mt-5">
+        <h2>Modified Sequences</h2>
+
+        <!-- Display original sequence -->
+        <h3>Original Sequence</h3>
+        <pre>{{ sequences['seq_record'] }}</pre>
+
+        <!-- Display modified sequences in a table -->
+        <h3>Modified Sequences</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sequence Type</th>
+                    <th>Sequence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Complement</td>
+                    <td>{{ sequences['seq_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>Reverse Complement</td>
+                    <td>{{ sequences['seq_reverse_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>mRNA</td>
+                    <td>{{ sequences['mRNA_seq'] }}</td>
+                </tr>
+                <tr>
+                    <td>Protein</td>
+                    <td>{{ sequences['protein_seq'] }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+{% endif %}
+
+@app.route('/perform_central_dogma', methods=['POST'])
+def perform_central_dogma():
+    global user_sequences, online_sequences
+
+    if request.method == 'POST':
+        if 'file' in request.files:
+            file = request.files['file']
+            sequences = read_sequences_from_file(file)
+
+            if sequences:
+                modified_sequences = []
+
+                for sequence in sequences:
+                    accession_code = sequence.description.split('|')[1]
+                    seq = str(sequence.seq)
+                    insert_or_update_sequences('sequences_data.db', accession_code, seq, 'sequences')
+
+                    # Perform central dogma
+                    seq_complement = complement(sequence.seq)
+                    reverse_complement_dna = reverse_complement(sequence.seq)
+                    mRNA = transcribe(sequence.seq)
+                    coding_dna = reverse_transcribe(mRNA)
+                    protein_seq_mRNA = translate_mRNA(mRNA)
+
+                    # Save the modified sequences to files
+                    save_sequence_to_file(sequence, accession_code, "Original Sequence", f"original_{accession_code}.fasta")
+                    save_sequence_to_file(seq_complement, accession_code, "Complement Sequence", f"complement_{accession_code}.fasta")
+                    save_sequence_to_file(reverse_complement_dna, accession_code, "Reverse Complement Sequence", f"reverse_complement_{accession_code}.fasta")
+                    save_sequence_to_file(mRNA, accession_code, "mRNA Sequence", f"mRNA_{accession_code}.fasta")
+                    save_sequence_to_file(coding_dna, accession_code, "Coding DNA Sequence", f"coding_dna_{accession_code}.fasta")
+                    save_sequence_to_file(protein_seq_mRNA, accession_code, "Protein Sequence (from mRNA)", f"protein_seq_MRNA_{accession_code}.fasta")
+                    insert_or_update_modified_sequences('sequences_data.db', accession_code, seq_complement, reverse_complement_dna, mRNA, protein_seq_mRNA)
+
+                    # Append the modified sequences for display
+                    modified_sequences.append((accession_code, seq_complement, reverse_complement_dna, mRNA, protein_seq_mRNA))
+
+                return render_template('upload.html', user_sequences=user_sequences, online_sequences=online_sequences, modified_sequences=modified_sequences)
+            else:
+                return render_template('upload.html', error="No sequences found in the file.")
+
+        elif 'db' in request.form and 'accession_code' in request.form:
+            db = request.form['db']
+            accession_code = request.form['accession_code']
+
+            sequence = read_sequence_from_database(db, accession_code)
+
+            if sequence:
+                sequence = Seq(sequence)
+                # Perform central dogma
+                seq_complement = complement(sequence.seq)
+                reverse_complement_dna = reverse_complement(sequence.seq)
+                mRNA = transcribe(sequence.seq)
+                coding_dna = reverse_transcribe(mRNA)
+                protein_seq_mRNA = translate_mRNA(mRNA)
+
+                # Save the modified sequences to files
+                save_sequence_to_file(sequence, accession_code, "Original Sequence", f"original_{accession_code}.fasta")
+                save_sequence_to_file(seq_complement, accession_code, "Complement Sequence", f"complement_{accession_code}.fasta")
+                save_sequence_to_file(reverse_complement_dna, accession_code, "Reverse Complement Sequence", f"reverse_complement_{accession_code}.fasta")
+                save_sequence_to_file(mRNA, accession_code, "mRNA Sequence", f"mRNA_{accession_code}.fasta")
+                save_sequence_to_file(coding_dna, accession_code, "Coding DNA Sequence", f"coding_dna_{accession_code}.fasta")
+                save_sequence_to_file(protein_seq_mRNA, accession_code, "Protein Sequence (from mRNA)", f"protein_seq_MRNA_{accession_code}.fasta")
+                insert_or_update_modified_sequences('sequences_data.db', accession_code, seq_complement, reverse_complement_dna, mRNA, protein_seq_mRNA)
+
+                modified_sequences = [(accession_code, seq_complement, reverse_complement_dna, mRNA, protein_seq_mRNA)]
+
+                return render_template('upload.html', user_sequences=user_sequences, online_sequences=online_sequences, modified_sequences=modified_sequences)
+            else:
+                return render_template('upload.html', error="Error retrieving sequence from the database.")
+
+    return render_template('upload.html', user_sequences=user_sequences, online_sequences=online_sequences, modified_sequences=modified_sequences)
+
+
+
+    online_sequences = read_sequence_from_database(db, accession_code)
+    
+    if online_sequences:
+        
+        #if the sequence is found add to sequences table
+        insert_or_update_sequences('sequences_data.db', accession_code, str(online_sequences), 'sequences')
+        if sequences:
+        # Pass the sequences to the template for rendering
+        seq_record, seq_complement, seq_reverse_complement, mRNA_seq, protein_seq = sequences
+        return render_template('upload.html', 
+                               accession_code=accession_code,
+                               seq_record=seq_record,
+                               seq_complement=seq_complement,
+                               seq_reverse_complement=seq_reverse_complement,
+                               mRNA_seq=mRNA_seq,
+                               protein_seq=protein_seq)
+
+
+
+                               @app.route('/query', methods=['POST'])
+def query_online_db():
+    """queries an online database if user does not have an input file"""
+
+    db = request.form.get('db')
+    accession_code = request.form.get('accession_code')
+    sequence = None
+    download_links = {}  # Initialize an empty dictionary for download links
+    if db and accession_code:
+        sequence = read_sequence_from_database(db, accession_code)
+        # if the sequence is found, add to sequences table
+        insert_or_update_sequences('sequences_data.db', accession_code, str(sequence), 'sequences')
+        if sequence:
+            if isinstance(sequence, str) and len(sequence) > 0:
+                try:
+                    sequence = Seq(sequence)
+                    # Perform central dogma
+                    seq_complement = complement(sequence.seq)
+                    reverse_complement_dna = reverse_complement(sequence.seq)
+                    mRNA = transcribe(sequence.seq)
+                    coding_dna = reverse_transcribe(mRNA)
+                    protein_seq_mRNA = translate_mRNA(mRNA)
+
+                    # Save the modified sequences to files
+                    save_sequence_to_file(sequence, accession_code, "Original Sequence", f"original_{accession_code}.fasta")
+                    save_sequence_to_file(seq_complement, accession_code, "Complement Sequence", f"complement_{accession_code}.fasta")
+                    save_sequence_to_file(reverse_complement_dna, accession_code, "Reverse Complement Sequence", f"reverse_complement_{accession_code}.fasta")
+                    save_sequence_to_file(mRNA, accession_code, "mRNA Sequence", f"mRNA_{accession_code}.fasta")
+                    save_sequence_to_file(coding_dna, accession_code, "Coding DNA Sequence", f"coding_dna_{accession_code}.fasta")
+                    save_sequence_to_file(protein_seq_mRNA, accession_code, "Protein Sequence (from mRNA)", f"protein_seq_MRNA_{accession_code}.fasta")
+
+                    # Generate download links for users
+                    download_links = {
+                        "Original Sequence": f"/download/original_{accession_code}.fasta",
+                        "Complement Sequence": f"/download/complement_{accession_code}.fasta",
+                        "Reverse Complement Sequence": f"/download/reverse_complement_{accession_code}.fasta",
+                        "mRNA Sequence": f"/download/mRNA_{accession_code}.fasta",
+                        "Coding DNA Sequence": f"/download/coding_dna_{accession_code}.fasta",
+                        "Protein Sequence": f"/download/protein_seq_MRNA_{accession_code}.fasta"
+                    }
+                except Exception as e:
+                    # Log the exception or handle the error appropriately
+                    print(f"Error in sequence manipulation: {e}")
+            else:
+                # Handle empty sequence case here
+                print("Sequence is empty or invalid")
+        else:
+            # Handle case where sequence is not found in the database
+            print("Sequence not found in the database")
+
+    return render_template("upload.html", sequence=sequence, download_links=download_links)
+
+
+    <form action="{{ url_for('download', filename='original.fasta') }}" method="get" class="mt-2">
+        <button type="submit" class="btn btn-primary">Download Original Sequence</button>
+    </form>
+    
+    <form action="{{ url_for('download', filename='complement.fasta') }}" method="get" class="mt-2">
+        <button type="submit" class="btn btn-primary">Download Complement Sequence</button>
+    </form>
+    
+    <form action="{{ url_for('download', filename='reverse_complement.fasta') }}" method="get" class="mt-2">
+        <button type="submit" class="btn btn-primary">Download Reverse Complement Sequence</button>
+    </form>
+    
+    <form action="{{ url_for('download', filename='mRNA.fasta') }}" method="get" class="mt-2">
+        <button type="submit" class="btn btn-primary">Download mRNA Sequence</button>
+    </form>
+    
+    <form action="{{ url_for('download', filename='protein_seq_mRNA.fasta') }}" method="get" class="mt-2">
+        <button type="submit" class="btn btn-primary">Download protein Sequence</button>
+    </form>
+
+
+    seq_record, seq_complement, seq_reverse_complement, mRNA_seq, protein_seq = modified_sequences
+                    
+                    
+        else:
+            print("No result found.")
+
+
+
+
+            <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modified Sequences Result</title>
-    <!-- Add any necessary styles or scripts here -->
+    <title>Sequence Analysis</title>
+
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+
+    <link href="{{url_for('static', filename='Image/fav.jpg')}}" rel="icon">
+
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <link href="{{url_for('static', filename='upload.css')}}" rel="stylesheet">
+
 </head>
 <body>
-    <h2>Modified Sequences Result</h2>
-    {% if message %}
-        <p>{{ message }}</p>
-    {% else %}
-        <p><strong>Accession Code:</strong> {{ accession_code }}</p>
-        <p><strong>Original Sequence:</strong> {{ seq_record }}</p>
-        <p><strong>Modified Sequences:</strong></p>
-        <ul>
-            <li><strong>Complement:</strong> {{ seq_complement }}</li>
-            <li><strong>Reverse Complement:</strong> {{ seq_reverse_complement }}</li>
-            <li><strong>mRNA:</strong> {{ mRNA_seq }}</li>
-            <li><strong>Protein:</strong> {{ protein_seq }}</li>
-        </ul>
+    <section id="hero">
+        <div class="hero-container">
+          <h1>Explore our sequence analysis tool</h1>
+        </div>
+      </section>
+<br>
+<br>
+<div class="container mt-5">
+    <h1 class="mb-4">Sequence Analysis</h1>
+
+    <!-- Form for uploading a file -->
+    <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="file">Upload Fasta File:</label>
+            <input type="file" class="form-control-file" id="file" name="file" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+
+    <!-- Form for querying the online database -->
+    <form action="{{ url_for('query_online_db') }}" method="post" class="mt-4">
+        <div class="form-group">
+            <label for="db">Database:</label>
+            <input type="text" class="form-control" id="db" name="db" required>
+        </div>
+        <div class="form-group">
+            <label for="accession_code">Accession Code:</label>
+            <input type="text" class="form-control" id="accession_code" name="accession_code" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Query Online Database</button>
+    </form>
+    <form action="{{ url_for('display_modified_seq') }}" method="post" class="mt-4">
+        <div class="form-group">
+            <label for="accession_code">Accession Code:</label>
+            <input type="text" class="form-control" id="accession_code" name="accession_code" required>
+        </div>
+        <button type="submit" class="btn btn-primary">view modified sequences</button>
+    </form>
+      
+
+
+    <!-- Display original and modified sequences -->
+{% if user_sequences or sequence or modified_sequences %}
+<div class="mt-5">
+    {% if user_sequences %}
+        <h2>User Uploaded Sequences</h2>
+        <!-- iterate on eveey sequence in file -->
+        {% for seq_record in user_sequences %}
+        <!-- Display user-uploaded sequences -->
+        <pre><textarea id="view" rows="10" cols="200">{{ seq_record.description }}  {{ seq_record.seq }}</textarea></pre>
+        {% endfor %}
     {% endif %}
+
+
+    {% if sequence %}
+        <h2>Online Database Sequences</h2>
+        <!-- Display sequences from online database -->
+        <pre><textarea id="view" rows="10" cols="200">{{ sequence }}</textarea></pre>
+    {% endif %}
+   
+    <!-- Your HTML structure -->
+
+    <!-- Display modified sequences -->
+    {% if modified_sequences %}
+    <h2>Modified Sequences</h2>
+    <!-- Display modified sequences -->
+    <div class="mt-5">
+        <!-- Display original sequence -->
+        <h3>Original Sequence</h3>
+        <pre><textarea id="view" rows="10" cols="200">{{ modified_sequences['seq_record'] }}</textarea></pre>
+
+        <!-- Display modified sequences in a table -->
+        <h3>Modified Sequences</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Sequence Type</th>
+                    <th>Sequence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Complement</td>
+                    <td>{{ modified_sequences['seq_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>Reverse Complement</td>
+                    <td>{{ modified_sequences['seq_reverse_complement'] }}</td>
+                </tr>
+                <tr>
+                    <td>mRNA</td>
+                    <td>{{ modified_sequences['mRNA_seq'] }}</td>
+                </tr>
+                <tr>
+                    <td>Protein</td>
+                    <td>{{ modified_sequences['protein_seq'] }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+{% endif %}
+                    
+            <!-- Example section in your HTML to display download links -->
+            {% if download_links %}
+            <h3>Download Modified Sequences:</h3>
+            <ul>
+                {% for seq_type, download_link in download_links.items() %}
+                <li>
+                    <form action="{{ download_link }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download {{ seq_type }}</button>
+                    </form>
+                    <form action="{{ url_for('download', filename='original.fasta') }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download Original Sequence</button>
+                    </form>
+                    
+                    <form action="{{ url_for('download', filename='complement.fasta') }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download Complement Sequence</button>
+                    </form>
+                    
+                    <form action="{{ url_for('download', filename='reverse_complement.fasta') }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download Reverse Complement Sequence</button>
+                    </form>
+                    
+                    <form action="{{ url_for('download', filename='mRNA.fasta') }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download mRNA Sequence</button>
+                    </form>
+                    
+                    <form action="{{ url_for('download', filename='protein_seq_mRNA.fasta') }}" method="get" class="mt-2">
+                        <button type="submit" class="btn btn-primary">Download protein Sequence</button>
+                    </form>
+                
+                </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+ 
+            
+            
+
+<!-- Including Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </body>
+<footer id="footer">
+    <div class="container">
+      <div class="copyright">
+        &copy; Copyright <strong><span>Genhub</span></strong>. All Rights Reserved
+      </div>
+      <div class="credits">
+        
+        Designed by <a href="https://bootstrapmade.com/">engine team</a>
+      </div>
+    </div>
+  </footer><!-- End #footer -->
 </html>

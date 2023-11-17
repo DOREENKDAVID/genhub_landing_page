@@ -30,7 +30,7 @@ def read_sequence_from_database(db, accession_code):
     try:            
             with Entrez.efetch(db=db, rettype="fasta", retmode="text", id=accession_code) as handle:
                 seq_record = SeqIO.read(handle, "fasta")
-                return {"accession_code": accession_code, "description": seq_record.description, "sequence": str(seq_record.seq)}
+                return {accession_code, seq_record.description, str(seq_record.seq)}
     except Exception as e:            
             print("Error during online query:", str(e))
             return None
@@ -176,7 +176,7 @@ def query_modified_seq_table(database_name, accession_code):
     cursor = conn.cursor()
 
     # Query the modified_sequences table
-    query = f'SELECT seq_complement, seq_reverse_complement, mRNA_seq, protein_seq FROM modifed_sequences WHERE accession_code = ?'
+    query = f'SELECT seq_complement, seq_reverse_complement, mRNA_seq, protein_seq FROM modified_sequences WHERE accession_code = ?'
     cursor.execute (query, (accession_code,))
     modified_results = cursor.fetchone()
 
@@ -228,6 +228,30 @@ if __name__ == "__main__":
         save_sequence_to_file(coding_dna, accession_code, "Coding DNA Sequence", "coding_dna.fasta")
         save_sequence_to_file(protein_seq_mRNA, accession_code, "Protein Sequence (from mRNA)", "protein_seq_mRNA.fasta")
         insert_or_update_modified_sequences('sequences_data.db', accession_code, seq_complement, reverse_complement_dna, mRNA, protein_seq_mRNA)
+        accession_code = input("Enter the ID of the query record: ")
+                    #query the modified database
+        result = query_modified_seq_table('sequences_data.db', accession_code)
+
+        if result:
+                seq_record, seq_complement, seq_reverse_complement, mRNA_seq, protein_seq = result
+                table = [["Record_ID", "sequence"], [accession_code, seq_record]]
+                        
+                print("Original Sequence:")
+                print(tabulate(table, headers="firstrow", tablefmt="grid"))
+                        
+                print("Modified Sequences:")
+                table = [
+                        ["Sequence Type", "Sequence"],
+                        ["Complement", seq_complement],
+                        ["Reverse Complement", seq_reverse_complement],
+                        ["mRNA", mRNA_seq], ["Protein", protein_seq],
+                        ]
+                        
+                print(tabulate(table, headers="firstrow", tablefmt="grid"))
+        else:
+            print("No result found.")
+
+
 
 
     #query the online databases to get the sequences
