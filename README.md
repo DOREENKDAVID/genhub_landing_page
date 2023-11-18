@@ -8,7 +8,7 @@ Welcome to GenoHub! This project serves as a cutting-edge platform for simplifyi
 
 #Authors:
 Author 1 Doreen kinya, https://github.com/DOREENKDAVID
-Author 2 James Kariuki https://github.com/JK -
+Author 2 James Kariuki https://github.com/JK-TK
 
 #Installation
 To get started with GenHub, follow these steps:
@@ -21,7 +21,7 @@ Install dependencies: npm install or yarn install
 
 Explore the intuitive interface and unleash the potential of genomic analysis.
 #Features
-### Sequence Visualization: Intuitive visualization tools for genetic sequences, aiding in easy interpretation and analysis.
+### Sequence Visualization: **Intuitive visualization tools for genetic sequences, aiding in easy interpretation and analysis**.
 
 ### Annotation and Highlighting: Annotation features to mark important genetic elements and highlighting functionalities for key sequences or regions.
 
