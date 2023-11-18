@@ -1,7 +1,7 @@
 #GENHUB
 Revolutionizing Genomic Data Analysis.
 
-
+![image](https://github.com/DOREENKDAVID/genhub_landing_page/assets/122915422/1d52ec4f-579c-44ca-8a7d-eb07874e11a1)
 
 #Introduction
 Welcome to GenoHub! This project serves as a cutting-edge platform for simplifying and enhancing genomic data analysis. Experience the power of genomics by exploring the deployed site here and reading our final project blog article here.
@@ -14,28 +14,21 @@ Author 2 James Kariuki https://github.com/JK-TK
 To get started with GenHub, follow these steps:
 
 Clone the repository: git clone https://doreenkdavid.github.io/genhub_landing_page/
-Install dependencies: npm install or yarn install 
-		Flask
-		Biopython
-		Sqlite
+Install dependencies: npm install or yarn install > requirements.txt
+
 
 Explore the intuitive interface and unleash the potential of genomic analysis.
 #Features
-### Sequence Visualization: **Intuitive visualization tools for genetic sequences, aiding in easy interpretation and analysis**.
+### Sequence Visualization
+### Annotation and Highlighting 
+### Reverse Complement Generation 
+### Central Dogma Operations
+### CG Content Calculation 
+### Sequence Length and Statistics Analysis 
+### Alignment and Comparison
+### User-Friendly Interface
 
-### Annotation and Highlighting: Annotation features to mark important genetic elements and highlighting functionalities for key sequences or regions.
 
-### Reverse Complement Generation: Instant generation of reverse complements for thorough comparative analysis.
-
-### Central Dogma Operations: Support for transcription, translation, and reverse transcription, providing a comprehensive suite for genetic analysis.
-
-### CG Content Calculation: Effortless calculation of CG (Cytosine-Guanine) content, a crucial metric in genomics.
-
-### Sequence Length and Statistics Analysis: Tools to analyze sequence length and obtain statistical insights for better understanding and comparisons.
-
-### Alignment and Comparison: Capabilities for sequence alignment, enabling users to identify similarities, differences, and conserved regions.
-
-### User-Friendly Interface: An intuitive and user-friendly interface, ensuring accessibility for researchers and scientists of varying expertise levels.
 # Here's how you can use Genhub:
 
 # Run the application
